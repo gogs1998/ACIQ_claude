@@ -88,44 +88,61 @@ class ExporterAgent:
 
     def _export_sage50(self, transactions: List[dict], output_path: Path):
         """
-        Export to Sage 50 Audit Trail format.
+        Export to Sage 50 import format (simplified CSV).
+
+        Creates a simple CSV that can be imported into Sage 50:
+        Date, Type, Nominal Code, Reference, Details, Debit, Credit
 
         Args:
             transactions: List of coded transactions
             output_path: Output file path
-
-        Note:
-            This is a placeholder. Column mapping will be implemented
-            after receiving real Sage 50 format sample.
         """
-        # Placeholder format - will be customized based on real Sage format
-        headers = [
-            'Date',
-            'Reference',
-            'Nominal Code',
-            'Details',
-            'Amount',
-            'Debit',
-            'Credit'
-        ]
-
         with open(output_path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=headers)
-            writer.writeheader()
+            writer = csv.writer(f)
+
+            # Write header
+            writer.writerow([
+                'Date',
+                'Type',
+                'Nominal Code',
+                'Reference',
+                'Details',
+                'Debit',
+                'Credit'
+            ])
 
             for txn in transactions:
                 # Determine debit/credit based on amount
                 amount = float(txn.get('amount', 0))
-                debit = amount if amount > 0 else 0
-                credit = abs(amount) if amount < 0 else 0
 
-                row = {
-                    'Date': txn.get('date', ''),
-                    'Reference': txn.get('reference', ''),
-                    'Nominal Code': txn.get('nominal_code', ''),
-                    'Details': txn.get('vendor', ''),
-                    'Amount': abs(amount),
-                    'Debit': debit,
-                    'Credit': credit
-                }
+                # Convert date to DD/MM/YYYY format (Sage format)
+                date_str = txn.get('date', '')
+                if isinstance(date_str, str) and len(date_str) == 10:
+                    # Already in YYYY-MM-DD format
+                    from datetime import datetime
+                    try:
+                        date_obj = datetime.strptime(str(date_str), "%Y-%m-%d")
+                        date_str = date_obj.strftime("%d/%m/%Y")
+                    except:
+                        pass
+
+                # Determine type and debit/credit
+                if amount > 0:
+                    txn_type = "BR"  # Bank Receipt
+                    debit = amount
+                    credit = 0
+                else:
+                    txn_type = "BP"  # Bank Payment
+                    debit = 0
+                    credit = abs(amount)
+
+                row = [
+                    date_str,
+                    txn_type,
+                    txn.get('nominal_code', ''),
+                    txn.get('reference', ''),
+                    txn.get('vendor', ''),
+                    f"{debit:.2f}",
+                    f"{credit:.2f}"
+                ]
                 writer.writerow(row)
