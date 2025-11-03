@@ -67,13 +67,15 @@ class BankParser:
                 # Parse date (YYYYMMDD format)
                 try:
                     date_obj = datetime.strptime(date_str, "%Y%m%d").date()
-                except:
+                except (ValueError, TypeError):
+                    # SECURITY FIX: Catch specific exceptions only
                     continue
 
                 # Parse amount (remove commas, convert to float)
                 try:
                     amount = float(amount_raw.replace(",", ""))
-                except:
+                except (ValueError, TypeError, AttributeError):
+                    # SECURITY FIX: Catch specific exceptions only
                     continue
 
                 # Skip zero amounts
@@ -103,8 +105,9 @@ class BankParser:
 
                 transactions.append(transaction)
 
-            except Exception as e:
-                # Skip problematic rows
+            except (ValueError, TypeError, IndexError, KeyError) as e:
+                # SECURITY FIX: Only catch expected parsing errors, not critical errors
+                # Skip individual row parsing errors but don't hide database/IO errors
                 continue
 
         return transactions

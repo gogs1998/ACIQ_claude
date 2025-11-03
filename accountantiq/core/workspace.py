@@ -116,17 +116,49 @@ class Workspace:
             raise ValueError(f"Workspace '{self.workspace_name}' does not exist")
         return Database(str(self.db_file))
 
+    def _validate_filename(self, filename: str) -> str:
+        """
+        Validate filename to prevent path traversal attacks.
+
+        Args:
+            filename: Filename to validate
+
+        Returns:
+            Safe filename (just the name component)
+
+        Raises:
+            ValueError: If filename is invalid or contains path components
+        """
+        if not filename:
+            raise ValueError("Filename cannot be empty")
+
+        # SECURITY FIX: Extract only the filename component (no path traversal)
+        safe_name = Path(filename).name
+
+        # Ensure the filename didn't contain any path components
+        if safe_name != filename or not safe_name:
+            raise ValueError(f"Invalid filename (contains path components): {filename}")
+
+        # Prevent hidden files
+        if safe_name.startswith('.'):
+            raise ValueError(f"Filename cannot start with dot: {filename}")
+
+        return safe_name
+
     def get_export_path(self, filename: str) -> Path:
-        """Get path for export file."""
-        return self.workspace_path / "exports" / filename
+        """Get path for export file with path traversal protection."""
+        safe_name = self._validate_filename(filename)
+        return self.workspace_path / "exports" / safe_name
 
     def get_import_path(self, filename: str) -> Path:
-        """Get path for import file."""
-        return self.workspace_path / "imports" / filename
+        """Get path for import file with path traversal protection."""
+        safe_name = self._validate_filename(filename)
+        return self.workspace_path / "imports" / safe_name
 
     def get_log_path(self, filename: str) -> Path:
-        """Get path for log file."""
-        return self.workspace_path / "logs" / filename
+        """Get path for log file with path traversal protection."""
+        safe_name = self._validate_filename(filename)
+        return self.workspace_path / "logs" / safe_name
 
     def delete(self, confirm: bool = False):
         """

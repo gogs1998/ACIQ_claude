@@ -77,7 +77,8 @@ class SageParser:
                 # Parse date (DD/MM/YYYY format)
                 try:
                     date_obj = datetime.strptime(date_str, "%d/%m/%Y").date()
-                except:
+                except (ValueError, TypeError):
+                    # SECURITY FIX: Catch specific exceptions only
                     continue
 
                 # Calculate amount (debit positive, credit negative for consistency)
@@ -112,8 +113,9 @@ class SageParser:
 
                 transactions.append(transaction)
 
-            except Exception as e:
-                # Skip problematic rows
+            except (ValueError, TypeError, IndexError, KeyError) as e:
+                # SECURITY FIX: Only catch expected parsing errors, not critical errors
+                # Skip individual row parsing errors but don't hide database/IO errors
                 continue
 
         return transactions

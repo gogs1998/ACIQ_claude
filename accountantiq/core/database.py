@@ -159,15 +159,32 @@ class Database:
 
         query += " ORDER BY created_at DESC"
 
+        # SECURITY FIX: Validate limit is a positive integer
         if limit:
+            if not isinstance(limit, int) or limit < 0:
+                raise ValueError(f"Limit must be a positive integer, got: {limit}")
             query += f" LIMIT {limit}"
 
         result = self.conn.execute(query, params).fetchall()
         columns = [desc[0] for desc in self.conn.description]
         return [dict(zip(columns, row)) for row in result]
 
-    def update_transaction(self, txn_id: int, updates: Dict[str, Any]):
-        """Update a transaction."""
+    # SECURITY: Whitelist of allowed fields for transaction updates
+    ALLOWED_TRANSACTION_UPDATE_FIELDS = {
+        'nominal_code', 'confidence', 'explanation', 'reviewed',
+        'assigned_by', 'reference', 'details'
+    }
+
+    def update_transaction(self, txn_id: int, updates: Dict[str, Any]) -> None:
+        """Update a transaction with field validation."""
+        if not updates:
+            return
+
+        # SECURITY FIX: Validate field names against whitelist
+        invalid_fields = set(updates.keys()) - self.ALLOWED_TRANSACTION_UPDATE_FIELDS
+        if invalid_fields:
+            raise ValueError(f"Invalid update fields: {invalid_fields}")
+
         set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
         query = f"UPDATE transactions SET {set_clause} WHERE id = ?"
         params = list(updates.values()) + [txn_id]
@@ -264,6 +281,10 @@ class Database:
 
     def get_agent_logs(self, agent_name: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
         """Get agent logs."""
+        # SECURITY FIX: Validate limit parameter
+        if not isinstance(limit, int) or limit < 0:
+            raise ValueError(f"Limit must be a positive integer, got: {limit}")
+
         query = "SELECT * FROM agent_logs WHERE 1=1"
         params = []
 

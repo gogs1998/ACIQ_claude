@@ -86,6 +86,30 @@ class ExporterAgent:
                 duration_ms=int((time.time() - start_time) * 1000)
             )
 
+    def _sanitize_csv_field(self, value: str) -> str:
+        """
+        Sanitize CSV field to prevent formula injection attacks.
+
+        Prevents Excel/LibreOffice from executing formulas by prefixing
+        dangerous characters with a single quote.
+
+        Args:
+            value: Field value to sanitize
+
+        Returns:
+            Sanitized value safe for CSV export
+        """
+        if not value or not isinstance(value, str):
+            return value or ''
+
+        # SECURITY FIX: Prevent CSV injection
+        # If field starts with =, +, -, @, |, %, or tab, prefix with single quote
+        dangerous_chars = ('=', '+', '-', '@', '|', '%', '\t')
+        if value and value[0] in dangerous_chars:
+            return "'" + value
+
+        return value
+
     def _export_sage50(self, transactions: List[dict], output_path: Path):
         """
         Export to Sage 50 import format (simplified CSV).
@@ -123,7 +147,7 @@ class ExporterAgent:
                     try:
                         date_obj = datetime.strptime(str(date_str), "%Y-%m-%d")
                         date_str = date_obj.strftime("%d/%m/%Y")
-                    except:
+                    except (ValueError, TypeError):
                         pass
 
                 # Determine type and debit/credit
@@ -136,12 +160,13 @@ class ExporterAgent:
                     debit = 0
                     credit = abs(amount)
 
+                # SECURITY FIX: Sanitize user-controlled fields
                 row = [
                     date_str,
                     txn_type,
-                    txn.get('nominal_code', ''),
-                    txn.get('reference', ''),
-                    txn.get('vendor', ''),
+                    self._sanitize_csv_field(txn.get('nominal_code', '')),
+                    self._sanitize_csv_field(txn.get('reference', '')),
+                    self._sanitize_csv_field(txn.get('vendor', '')),
                     f"{debit:.2f}",
                     f"{credit:.2f}"
                 ]
