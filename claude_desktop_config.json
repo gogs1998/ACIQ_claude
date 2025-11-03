@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "accountantiq": {
+      "command": "python",
+      "args": [
+        "D:\\Claude\\ACIQ\\mcp_server.py"
+      ],
+      "env": {
+        "WORKSPACE": "production"
+      }
+    }
+  }
+}
