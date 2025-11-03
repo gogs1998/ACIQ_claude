@@ -128,7 +128,7 @@ class LearnerAgent:
         from datetime import date as Date
         from decimal import Decimal
 
-        # Build index of Sage transactions by (date, amount)
+        # Build index of Sage transactions by (date, absolute amount)
         sage_index = defaultdict(list)
         for txn in sage_txns:
             if txn.get('nominal_code'):
@@ -142,9 +142,9 @@ class LearnerAgent:
                     except:
                         continue
 
-                # Normalize amount to 2 decimal places
+                # Use ABSOLUTE amount (ignore sign differences between bank/Sage)
                 amount = float(txn.get('amount', 0))
-                amount_key = round(amount, 2)
+                amount_key = round(abs(amount), 2)
 
                 key = (txn_date, amount_key)
                 sage_index[key].append(txn)
@@ -160,7 +160,8 @@ class LearnerAgent:
                 except:
                     continue
 
-            bank_amount = round(float(bank_txn.get('amount', 0)), 2)
+            # Use ABSOLUTE amount to match regardless of sign
+            bank_amount = round(abs(float(bank_txn.get('amount', 0))), 2)
             key = (bank_date, bank_amount)
 
             # Find matching Sage transaction(s)
@@ -190,15 +191,16 @@ class LearnerAgent:
             most_common = max(code_counts.items(), key=lambda x: x[1])
             nominal_code, count = most_common
 
-            # Calculate confidence
+            # Calculate confidence (round to 2 decimal places for Pydantic)
             confidence = count / total
+            confidence_rounded = round(confidence, 2)
 
             if confidence >= min_confidence:
                 rule = Rule(
                     vendor_pattern=bank_vendor,
                     nominal_code=nominal_code,
                     rule_type="exact",  # Exact match for bank vendor names
-                    confidence=Decimal(str(confidence)),
+                    confidence=Decimal(str(confidence_rounded)),
                     match_count=count,
                     created_by="learner"
                 )
