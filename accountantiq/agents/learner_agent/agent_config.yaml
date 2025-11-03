@@ -1,0 +1,41 @@
+# LEARNER AGENT CONFIGURATION
+# Role: Build vendor→nominal code mappings from historical transactions
+
+agent_name: learner
+version: 0.1.0
+
+capabilities:
+  - pattern_recognition
+  - fuzzy_matching
+  - confidence_scoring
+  - rule_generation
+
+inputs:
+  - historical_transactions_from_duckdb
+
+outputs:
+  - rules_database_with_vendor_patterns
+
+tools:
+  - rapidfuzz
+  - duckdb_queries
+  - statistical_analysis
+
+configuration:
+  min_confidence_threshold: 0.75
+  min_transaction_count: 3  # Minimum transactions to create a rule
+  fuzzy_match_threshold: 85  # Similarity score 0-100
+
+  rule_types:
+    - exact_match  # Vendor name exactly matches
+    - fuzzy_match  # Vendor name is similar (using rapidfuzz)
+    - regex_match  # Pattern-based matching
+
+  vendor_normalization:
+    - remove_special_chars: true
+    - lowercase: true
+    - trim_whitespace: true
+
+notes: |
+  This agent analyzes historical Sage data to learn vendor→nominal code patterns.
+  Uses fuzzy matching to handle vendor name variations.

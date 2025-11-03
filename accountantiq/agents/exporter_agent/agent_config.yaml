@@ -1,0 +1,45 @@
+# EXPORTER AGENT CONFIGURATION
+# Role: Generate valid Sage 50 Audit Trail CSV for import
+
+agent_name: exporter
+version: 0.1.0
+
+capabilities:
+  - format_validation
+  - column_mapping
+  - csv_generation
+  - profile_management
+
+inputs:
+  - approved_coded_transactions
+
+outputs:
+  - sage50_importable_csv
+
+tools:
+  - csv_formatting
+  - validation
+  - profile_management
+
+configuration:
+  output_format: sage50_audit_trail
+
+  # Will be populated after seeing real Sage 50 format
+  sage50_columns: null
+
+  validation_rules:
+    - no_missing_nominal_codes
+    - valid_date_format
+    - valid_amount_format
+    - no_duplicate_references
+
+  export_options:
+    include_header: true
+    delimiter: ","
+    quote_char: "\""
+    date_format: "%d/%m/%Y"  # Adjust based on Sage preference
+
+notes: |
+  This agent generates the final CSV file that can be imported into Sage 50.
+  Column mapping will be customized based on the real Sage 50 format provided.
+  Performs validation to ensure the output is importable.

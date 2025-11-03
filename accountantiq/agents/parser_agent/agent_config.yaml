@@ -1,0 +1,47 @@
+# PARSER AGENT CONFIGURATION
+# Role: Ingest and normalize accounting data from Sage 50 and bank statements
+
+agent_name: parser
+version: 0.1.0
+
+capabilities:
+  - csv_parsing
+  - schema_detection
+  - data_validation
+  - format_normalization
+
+inputs:
+  - raw_sage_csv_files
+  - raw_bank_csv_files
+
+outputs:
+  - normalized_transactions_in_duckdb
+
+tools:
+  - polars
+  - duckdb
+  - file_operations
+
+configuration:
+  # Will be populated after seeing real CSV formats
+  sage_column_mapping: null
+  bank_column_mapping: null
+  date_formats:
+    - "%Y-%m-%d"
+    - "%d/%m/%Y"
+    - "%m/%d/%Y"
+
+  validation_rules:
+    required_fields:
+      - date
+      - vendor
+      - amount
+
+    amount_validation:
+      min: -1000000
+      max: 1000000
+      decimal_places: 2
+
+notes: |
+  This agent will be customized after receiving real Sage 50 and bank CSV samples.
+  DO NOT assume column names or formats.

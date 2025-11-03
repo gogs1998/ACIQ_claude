@@ -1,0 +1,44 @@
+# CLASSIFIER AGENT CONFIGURATION
+# Role: Auto-code new bank transactions using learned rules
+
+agent_name: classifier
+version: 0.1.0
+
+capabilities:
+  - fuzzy_matching
+  - rule_application
+  - explanation_generation
+  - confidence_calculation
+
+inputs:
+  - new_bank_transactions
+  - rules_database
+
+outputs:
+  - coded_transactions_with_confidence
+  - explanations_for_suggestions
+
+tools:
+  - rapidfuzz
+  - rule_engine
+  - confidence_calculator
+
+configuration:
+  confidence_threshold: 0.70  # Minimum confidence to auto-code
+  fuzzy_match_threshold: 85
+  max_suggestions: 3  # Max alternative suggestions per transaction
+
+  confidence_factors:
+    exact_match_weight: 1.0
+    fuzzy_match_weight: 0.8
+    rule_usage_weight: 0.1  # Boost for frequently used rules
+    recency_weight: 0.05  # Boost for recently used rules
+
+  explanation_template: |
+    Matched vendor "{vendor}" to nominal code {code} based on {rule_type} match
+    (confidence: {confidence}%, last used: {last_used})
+
+notes: |
+  This agent applies learned rules to new transactions.
+  Generates confidence scores and explanations for each suggestion.
+  Low-confidence transactions are flagged for manual review.

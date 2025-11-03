@@ -1,0 +1,44 @@
+# REVIEWER AGENT CONFIGURATION
+# Role: Handle exceptions and learn from user corrections
+
+agent_name: reviewer
+version: 0.1.0
+
+capabilities:
+  - interactive_review
+  - rule_creation_from_corrections
+  - exception_handling
+  - learning_from_feedback
+
+inputs:
+  - low_confidence_transactions
+  - user_overrides
+
+outputs:
+  - approved_transactions
+  - new_rules_from_overrides
+
+tools:
+  - user_interaction
+  - rule_generation
+  - confidence_updating
+
+configuration:
+  review_threshold: 0.70  # Transactions below this need review
+  auto_approve_threshold: 0.90  # Transactions above this auto-approve
+
+  interaction_mode:
+    batch_size: 10  # Review N transactions at a time
+    show_suggestions: true
+    show_confidence: true
+    show_explanation: true
+
+  learning_policy:
+    create_rule_on_override: true
+    rule_confidence: 0.80  # Confidence for user-created rules
+    update_existing_rules: true
+
+notes: |
+  This agent handles the human-in-the-loop aspect.
+  When users override suggestions, it learns and creates new rules.
+  Critical for improving the system over time.
